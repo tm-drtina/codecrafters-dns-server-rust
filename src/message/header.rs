@@ -68,7 +68,7 @@ pub struct Header {
 }
 
 impl Header {
-    pub fn bytes(&self) -> [u8; 12] {
+    pub fn write(&self, buf: &mut Vec<u8>) {
         //                                  1  1  1  1  1  1
         //    0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
         // +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
@@ -84,33 +84,38 @@ impl Header {
         // +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
         // |                    ARCOUNT                    |
         // +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-        let mut res = [0; 12];
-        res[0..2].clone_from_slice(&self.id.to_be_bytes());
+        buf.extend_from_slice(&self.id.to_be_bytes());
 
-        if self.is_reply {
-            res[2] |= 0b1000_0000;
-        }
-        res[2] |= (self.opcode as u8) << 3;
-        if self.authoritative {
-            res[2] |= 0b0000_0100;
-        }
-        if self.truncation {
-            res[2] |= 0b0000_0010;
-        }
-        if self.recursion_desired {
-            res[2] |= 0b0000_0001;
-        }
+        buf.push({
+            let mut byte = 0;
+            if self.is_reply {
+                byte |= 0b1000_0000;
+            }
+            byte |= (self.opcode as u8) << 3;
+            if self.authoritative {
+                byte |= 0b0000_0100;
+            }
+            if self.truncation {
+                byte |= 0b0000_0010;
+            }
+            if self.recursion_desired {
+                byte |= 0b0000_0001;
+            }
+            byte
+        });
 
-        if self.recursion_available {
-            res[3] |= 0b1000_0000;
-        }
-        res[3] |= self.rcode as u8;
+        buf.push({
+            let mut byte = 0;
+            if self.recursion_available {
+                byte |= 0b1000_0000;
+            }
+            byte |= self.rcode as u8;
+            byte
+        });
 
-        res[4..6].clone_from_slice(&self.question_count.to_be_bytes());
-        res[6..8].clone_from_slice(&self.answer_count.to_be_bytes());
-        res[8..10].clone_from_slice(&self.authority_count.to_be_bytes());
-        res[10..12].clone_from_slice(&self.additional_count.to_be_bytes());
-        
-        res
+        buf.extend_from_slice(&self.question_count.to_be_bytes());
+        buf.extend_from_slice(&self.answer_count.to_be_bytes());
+        buf.extend_from_slice(&self.authority_count.to_be_bytes());
+        buf.extend_from_slice(&self.additional_count.to_be_bytes());
     }
 }

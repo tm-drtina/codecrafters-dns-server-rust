@@ -22,7 +22,7 @@ fn main() {
                         recursion_available: false,
                         rcode: RCode::NoError,
                         question_count: 1,
-                        answer_count: 0,
+                        answer_count: 1,
                         authority_count: 0,
                         additional_count: 0,
                     },
@@ -30,6 +30,14 @@ fn main() {
                         qname: vec![b"codecrafters".to_vec(), b"io".to_vec()],
                         qtype: QType::A,
                         qclass: QClass::IN,
+                    }],
+                    answers: vec![Answer {
+                        name: vec![b"codecrafters".to_vec(), b"io".to_vec()],
+                        rtype: QType::A,
+                        rclass: QClass::IN,
+                        ttl: 60,
+                        rdlength: 4,
+                        rdata: vec![0x08, 0x08, 0x08, 0x08],
                     }],
                 };
 

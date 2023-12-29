@@ -9,18 +9,18 @@ fn main() {
     loop {
         match udp_socket.recv_from(&mut buf) {
             Ok((size, source)) => {
-                let _received_data = String::from_utf8_lossy(&buf[0..size]);
+                let request = Message::from_bytes(&buf[0..size]);
 
                 let message = Message {
                     header: Header {
-                        id: 1234,
+                        id: request.header.id,
                         is_reply: true,
-                        opcode: Opcode::QUERY,
+                        opcode: request.header.opcode,
                         authoritative: false,
                         truncation: false,
-                        recursion_desired: false,
+                        recursion_desired: request.header.recursion_desired,
                         recursion_available: false,
-                        rcode: RCode::NoError,
+                        rcode: if request.header.opcode == Opcode::Query { RCode::NoError } else { RCode::NotImplemented },
                         question_count: 1,
                         answer_count: 1,
                         authority_count: 0,

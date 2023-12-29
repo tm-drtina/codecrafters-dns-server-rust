@@ -55,4 +55,8 @@ impl Answer {
         buf.extend_from_slice(&self.rdlength.to_be_bytes());
         buf.extend(self.rdata.iter());
     }
+
+    pub fn read(_buf: &mut &[u8]) -> Self {
+        todo!()
+    }
 }

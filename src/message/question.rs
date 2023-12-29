@@ -37,4 +37,8 @@ impl Question {
         buf.extend_from_slice(&self.qtype.to_bytes());
         buf.extend_from_slice(&self.qclass.to_bytes());
     }
+
+    pub fn read(_buf: &mut &[u8]) -> Self {
+        todo!()
+    }
 }

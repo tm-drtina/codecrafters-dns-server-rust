@@ -28,4 +28,21 @@ impl Message {
         }
         write_buf
     }
+
+    pub fn from_bytes(buf: &[u8]) -> Self {
+        let (header, _body) = buf.split_at(12);
+        let header = Header::from_bytes(header);
+
+        let questions = Vec::with_capacity(header.question_count as usize);
+        for _ in 0..header.question_count {
+            // questions.push(Question::read(&mut body));
+        }
+
+        let answers = Vec::with_capacity(header.answer_count as usize);
+        for _ in 0..header.answer_count {
+            // answers.push(Answer::read(&mut body));
+        }
+
+        Self { header, questions, answers }
+    }
 }

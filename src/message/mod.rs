@@ -10,6 +10,7 @@ pub use question::*;
 pub use rclass::*;
 pub use rtype::*;
 
+#[derive(Debug)]
 pub struct Message {
     pub header: header::Header,
     pub questions: Vec<question::Question>,
@@ -30,17 +31,17 @@ impl Message {
     }
 
     pub fn from_bytes(buf: &[u8]) -> Self {
-        let (header, _body) = buf.split_at(12);
+        let (header, mut body) = buf.split_at(12);
         let header = Header::from_bytes(header);
 
-        let questions = Vec::with_capacity(header.question_count as usize);
+        let mut questions = Vec::with_capacity(header.question_count as usize);
         for _ in 0..header.question_count {
-            // questions.push(Question::read(&mut body));
+            questions.push(Question::read(&mut body));
         }
 
-        let answers = Vec::with_capacity(header.answer_count as usize);
+        let mut answers = Vec::with_capacity(header.answer_count as usize);
         for _ in 0..header.answer_count {
-            // answers.push(Answer::read(&mut body));
+            answers.push(Answer::read(&mut body));
         }
 
         Self { header, questions, answers }

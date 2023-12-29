@@ -1,35 +1,39 @@
-/// A four bit field that specifies kind of query in this message.
-/// This value is set by the originator of a query and copied into the response.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Opcode {
-    /// a standard query
-    Query,
-    /// an inverse query
-    IQuery,
-    /// a server status request
-    Status,
-    //3-15 reserved for future use
-    Reserved(u8),
+use crate::int_enum;
+
+int_enum! {
+    /// A four bit field that specifies kind of query in this message.
+    /// This value is set by the originator of a query and copied into the response.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    Opcode(u8) {
+        /// a standard query
+        Query = 0,
+        /// an inverse query
+        IQuery = 1,
+        /// a server status request
+        Status = 2,
+        //3-15 reserved for future use
+    }
 }
 
-/// Response code - this 4 bit field is set as part of responses.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum RCode {
-    /// No error condition
-    NoError,
-    /// The name server was unable to interpret the query.
-    FormatError,
-    /// The name server was unable to process this query due to a problem with the name server.
-    ServerFailure,
-    /// Meaningful only for responses from an authoritative name server, this code signifies that the domain name referenced in the query does not exist.
-    NameError,
-    /// The name server does not support the requested kind of query.
-    NotImplemented,
-    /// The name server refuses to perform the specified operation for policy reasons.
-    /// For example, a name server may not wish to provide the information to the particular requester, or a name server may not wish to perform a particular operation (e.g., zone transfer) for particular data.
-    Refused,
-    // 6-15 Reserved for future use.
-    Reserved(u8),
+int_enum! {
+    /// Response code - this 4 bit field is set as part of responses.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    RCode(u8) {
+        /// No error condition
+        NoError = 0,
+        /// The name server was unable to interpret the query.
+        FormatError = 1,
+        /// The name server was unable to process this query due to a problem with the name server.
+        ServerFailure = 2,
+        /// Meaningful only for responses from an authoritative name server, this code signifies that the domain name referenced in the query does not exist.
+        NameError = 3,
+        /// The name server does not support the requested kind of query.
+        NotImplemented = 4,
+        /// The name server refuses to perform the specified operation for policy reasons.
+        /// For example, a name server may not wish to provide the information to the particular requester, or a name server may not wish to perform a particular operation (e.g., zone transfer) for particular data.
+        Refused = 5,
+        // 6-15 Reserved for future use.
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -93,12 +97,7 @@ impl Header {
             if self.is_reply {
                 byte |= 0b1000_0000;
             }
-            byte |= match self.opcode {
-                Opcode::Query => 0,
-                Opcode::IQuery => 1,
-                Opcode::Status => 2,
-                Opcode::Reserved(n) => n,
-            } << 3;
+            byte |= self.opcode.value() << 3;
             if self.authoritative {
                 byte |= 0b0000_0100;
             }
@@ -116,15 +115,7 @@ impl Header {
             if self.recursion_available {
                 byte |= 0b1000_0000;
             }
-            byte |= match self.rcode {
-                RCode::NoError => 0,
-                RCode::FormatError => 1,
-                RCode::ServerFailure => 2,
-                RCode::NameError => 3,
-                RCode::NotImplemented => 4,
-                RCode::Refused => 5,
-                RCode::Reserved(n) => n,
-            };
+            byte |= self.rcode.value();
             byte
         });
 
@@ -135,30 +126,17 @@ impl Header {
     }
 
     pub fn from_bytes(buf: &[u8]) -> Self {
+        let opcode = Opcode::from_value((buf[2] & 0b0111_1000) >> 3);
+        let rcode = RCode::from_value(buf[3] & 0b0000_1111);
         Self {
             id: u16::from_be_bytes([buf[0], buf[1]]),
             is_reply: buf[2] & 0b1000_0000 > 0,
-            opcode: match (buf[2] & 0b0111_1000) >> 3 {
-                0 => Opcode::Query,
-                1 => Opcode::IQuery,
-                2 => Opcode::Status,
-                n@3..=15 => Opcode::Reserved(n),
-                _ => unreachable!()
-            },
+            opcode,
             authoritative: buf[2] & 0b0000_0100 > 0,
             truncation: buf[2] & 0b0000_0010 > 0,
             recursion_desired: buf[2] & 0b0000_0001 > 0,
             recursion_available: buf[3] & 0b1000_0000 > 0,
-            rcode: match buf[3] & 0b0000_1111 {
-                0 => RCode::NoError,
-                1 => RCode::FormatError,
-                2 => RCode::ServerFailure,
-                3 => RCode::NameError,
-                4 => RCode::NotImplemented,
-                5 => RCode::Refused,
-                n@6..=15 => RCode::Reserved(n),
-                _ => unreachable!(),
-            },
+            rcode,
             question_count: u16::from_be_bytes([buf[4], buf[5]]),
             answer_count: u16::from_be_bytes([buf[6], buf[7]]),
             authority_count: u16::from_be_bytes([buf[8], buf[9]]),

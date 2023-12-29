@@ -11,6 +11,19 @@ fn main() {
             Ok((size, source)) => {
                 let request = Message::from_bytes(&buf[0..size]);
 
+                let questions = request.questions;
+                let answers: Vec<_> = questions.iter().map(|q| {
+                    Answer {
+                        name: q.qname.clone(),
+                        rtype: q.qtype,
+                        rclass: q.qclass,
+                        ttl: 60,
+                        rdlength: 4,
+                        rdata: vec![0x08, 0x08, 0x08, 0x08],
+                    }
+                }).collect();
+
+
                 let message = Message {
                     header: Header {
                         id: request.header.id,
@@ -21,24 +34,13 @@ fn main() {
                         recursion_desired: request.header.recursion_desired,
                         recursion_available: false,
                         rcode: if request.header.opcode == Opcode::Query { RCode::NoError } else { RCode::NotImplemented },
-                        question_count: 1,
-                        answer_count: 1,
+                        question_count: questions.len() as u16,
+                        answer_count: answers.len() as u16,
                         authority_count: 0,
                         additional_count: 0,
                     },
-                    questions: vec![Question {
-                        qname: vec![b"codecrafters".to_vec(), b"io".to_vec()],
-                        qtype: QType::A,
-                        qclass: QClass::IN,
-                    }],
-                    answers: vec![Answer {
-                        name: vec![b"codecrafters".to_vec(), b"io".to_vec()],
-                        rtype: QType::A,
-                        rclass: QClass::IN,
-                        ttl: 60,
-                        rdlength: 4,
-                        rdata: vec![0x08, 0x08, 0x08, 0x08],
-                    }],
+                    questions,
+                    answers,
                 };
 
                 udp_socket

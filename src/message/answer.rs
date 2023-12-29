@@ -49,14 +49,33 @@ impl Answer {
         }
         buf.push(0);
 
-        buf.extend_from_slice(&self.rtype.to_bytes());
-        buf.extend_from_slice(&self.rclass.to_bytes());
+        buf.extend_from_slice(&self.rtype.value().to_be_bytes());
+        buf.extend_from_slice(&self.rclass.value().to_be_bytes());
         buf.extend_from_slice(&self.ttl.to_be_bytes());
         buf.extend_from_slice(&self.rdlength.to_be_bytes());
         buf.extend(self.rdata.iter());
     }
 
-    pub fn read(_buf: &mut &[u8]) -> Self {
-        todo!()
+    pub fn read(buf: &mut &[u8]) -> Self {
+        let mut name = Vec::new();
+        loop {
+            let len = buf[0] as usize;
+            *buf = &buf[1..];
+            if len == 0 {
+                break;
+            }
+            name.push(buf[0..len].to_vec());
+            *buf = &buf[len..];
+        }
+
+        let rtype = QType::from_value(u16::from_be_bytes([buf[0], buf[1]]));
+        let rclass = QClass::from_value(u16::from_be_bytes([buf[2], buf[3]]));
+        let ttl = i32::from_be_bytes([buf[4], buf[5], buf[6], buf[6]]);
+        let rdlength = u16::from_be_bytes([buf[7], buf[8]]);
+        let rdata = buf[9..9 + (rdlength as usize)].to_vec();
+
+        *buf = &buf[9 + (rdlength as usize)..];
+
+        Self { name, rtype, rclass, ttl, rdlength, rdata }
     }
 }

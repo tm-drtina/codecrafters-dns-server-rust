@@ -34,11 +34,26 @@ impl Question {
         }
         buf.push(0);
 
-        buf.extend_from_slice(&self.qtype.to_bytes());
-        buf.extend_from_slice(&self.qclass.to_bytes());
+        buf.extend_from_slice(&self.qtype.value().to_be_bytes());
+        buf.extend_from_slice(&self.qclass.value().to_be_bytes());
     }
 
-    pub fn read(_buf: &mut &[u8]) -> Self {
-        todo!()
+    pub fn read(buf: &mut &[u8]) -> Self {
+        let mut qname = Vec::new();
+        loop {
+            let len = buf[0] as usize;
+            *buf = &buf[1..];
+            if len == 0 {
+                break;
+            }
+            qname.push(buf[0..len].to_vec());
+            *buf = &buf[len..];
+        }
+
+        let qtype = QType::from_value(u16::from_be_bytes([buf[0], buf[1]]));
+        let qclass = QClass::from_value(u16::from_be_bytes([buf[2], buf[3]]));
+        *buf = &buf[4..];
+
+        Self { qname, qtype, qclass }
     }
 }

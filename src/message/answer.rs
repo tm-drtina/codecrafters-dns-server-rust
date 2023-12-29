@@ -1,10 +1,10 @@
-use crate::message::{QType, QClass};
+use crate::message::{QType, QClass, Name};
 
 /// The question section is used to carry the "question" in most queries, i.e., the parameters that define what is being asked.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Answer {
     /// an owner name, i.e., the name of the node to which this resource record pertains.
-    pub name: Vec<Vec<u8>>,
+    pub name: Name,
     /// two octets containing one of the RR TYPE codes
     pub rtype: QType,
     /// two octets containing one of the RR CLASS codes.
@@ -42,12 +42,7 @@ impl Answer {
         // /                     RDATA                     /
         // /                                               /
         // +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-
-        for name_part in &self.name {
-            buf.push(name_part.len() as u8);
-            buf.extend(name_part);
-        }
-        buf.push(0);
+        self.name.write(buf);
 
         buf.extend_from_slice(&self.rtype.value().to_be_bytes());
         buf.extend_from_slice(&self.rclass.value().to_be_bytes());
@@ -57,16 +52,7 @@ impl Answer {
     }
 
     pub fn read(buf: &mut &[u8]) -> Self {
-        let mut name = Vec::new();
-        loop {
-            let len = buf[0] as usize;
-            *buf = &buf[1..];
-            if len == 0 {
-                break;
-            }
-            name.push(buf[0..len].to_vec());
-            *buf = &buf[len..];
-        }
+        let name = Name::read(buf);
 
         let rtype = QType::from_value(u16::from_be_bytes([buf[0], buf[1]]));
         let rclass = QClass::from_value(u16::from_be_bytes([buf[2], buf[3]]));

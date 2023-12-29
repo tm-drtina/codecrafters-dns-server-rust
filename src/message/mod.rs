@@ -1,5 +1,6 @@
 mod answer;
 mod header;
+mod name;
 mod question;
 mod rclass;
 mod rtype;
@@ -7,6 +8,7 @@ mod rtype;
 pub use answer::*;
 pub use header::*;
 pub use question::*;
+pub use name::*;
 pub use rclass::*;
 pub use rtype::*;
 

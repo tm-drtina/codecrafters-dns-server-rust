@@ -23,7 +23,6 @@ fn main() {
                     }
                 }).collect();
 
-
                 let message = Message {
                     header: Header {
                         id: request.header.id,

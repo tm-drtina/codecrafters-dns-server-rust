@@ -42,4 +42,14 @@ impl Name {
 
         name
     }
+
+    pub(crate) fn resolve(&self, msg: &[u8]) -> Self {
+        let mut name = self.clone();
+        while let Some(pointer) = name.pointer {
+            let next = Self::read(&mut &msg[pointer as usize..]);
+            name.parts.extend(next.parts);
+            name.pointer = next.pointer;
+        }
+        name
+    }
 }

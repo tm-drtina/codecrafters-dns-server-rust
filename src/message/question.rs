@@ -42,4 +42,8 @@ impl Question {
 
         Self { qname, qtype, qclass }
     }
+
+    pub fn with_resolved_name(&self, msg: &[u8]) -> Self {
+        Self { qname: self.qname.resolve(msg), qtype: self.qtype, qclass: self.qclass }
+    }
 }

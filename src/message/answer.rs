@@ -56,11 +56,11 @@ impl Answer {
 
         let rtype = QType::from_value(u16::from_be_bytes([buf[0], buf[1]]));
         let rclass = QClass::from_value(u16::from_be_bytes([buf[2], buf[3]]));
-        let ttl = i32::from_be_bytes([buf[4], buf[5], buf[6], buf[6]]);
-        let rdlength = u16::from_be_bytes([buf[7], buf[8]]);
-        let rdata = buf[9..9 + (rdlength as usize)].to_vec();
+        let ttl = i32::from_be_bytes([buf[4], buf[5], buf[6], buf[7]]);
+        let rdlength = u16::from_be_bytes([buf[8], buf[9]]);
+        let rdata = buf[10..10 + (rdlength as usize)].to_vec();
 
-        *buf = &buf[9 + (rdlength as usize)..];
+        *buf = &buf[10 + (rdlength as usize)..];
 
         Self { name, rtype, rclass, ttl, rdlength, rdata }
     }

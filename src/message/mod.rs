@@ -48,4 +48,25 @@ impl Message {
 
         Self { header, questions, answers }
     }
+
+    pub fn reply(self, rcode: RCode, answers: Vec<Answer>) -> Self {
+        Self {
+            header: Header {
+                id: self.header.id,
+                is_reply: true,
+                opcode: self.header.opcode,
+                authoritative: false,
+                truncation: false,
+                recursion_desired: self.header.recursion_desired,
+                recursion_available: false,
+                rcode,
+                question_count: self.questions.len() as u16,
+                answer_count: answers.len() as u16,
+                authority_count: 0,
+                additional_count: 0,
+            },
+            questions: self.questions,
+            answers,
+        }
+    }
 }
